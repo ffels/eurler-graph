@@ -1,6 +1,8 @@
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { distinctUntilChanged } from "rxjs/operators";
 import * as math from 'mathjs';
+
 import {
   ChartComponent,
   ApexAxisChartSeries,
@@ -37,17 +39,30 @@ export type ChartOptions = {
 export class AppComponent implements AfterViewInit {
   title = 'Graficador de Eule, Euler Mejorado y Runge-Kutta';
   @ViewChild("chartObj") chart: ChartComponent;
+  @ViewChild("sliderElement") sliderElement: ElementRef;
   public chartOptions: Partial<ChartOptions>;
   public formGroup: FormGroup;
+  public ejemplosDeFuncion: string = "Ejemplos:\nx + y\nx - y\nx * y\nx / y\nx ^ y\nsin(x)\ncos(y)\ntan(x)";
+  public slider = {
+    id: 1,
+    answer: 0,
+    step: 1,
+    minValue: 1,
+    maxValue: 10
+  };
 
   constructor() {
     this.formGroup = new FormGroup({
-      funcion: new FormControl('4*x*y/2+x*x', Validators.required),
+      funcion: new FormControl('sin(x)*cos(y)', Validators.required),
       yInicial: new FormControl('0', Validators.required),
       xInicial: new FormControl('0', Validators.required),
-      xFinal: new FormControl('2', Validators.required),
-      valorH: new FormControl('0.25', Validators.required)
+      xFinal: new FormControl('3', Validators.required),
+      intervalos: new FormControl('3', Validators.required)
     });
+    this.initalizeCharOptions();
+  }
+
+  private initalizeCharOptions(): void {
     this.chartOptions = {
       series: [
         {
@@ -92,13 +107,6 @@ export class AppComponent implements AfterViewInit {
       xaxis: {
         type: 'numeric',
         labels: {
-          /**
-          * Allows users to apply a custom formatter function to xaxis labels.
-          *
-          * @param { String } value - The default value generated
-          * @param { Number } timestamp - In a datetime series, this is the raw timestamp 
-          * @param { object } contains dateFormatter for datetime x-axis
-          */
           formatter: function(value, timestamp, opts) {
             return parseFloat(value).toFixed(2)
           }
@@ -122,9 +130,9 @@ export class AppComponent implements AfterViewInit {
     });
   }
 
-  private euler(funcion: string, valorFinalDeX: any, valorInicialDeX: any, valorInicialDeY: any, h: any): void  {
+  private euler(funcion: string, xFinal: any, valorInicialDeX: any, valorInicialDeY: any, h: any): void  {
     let valores = [{ x: valorInicialDeX, y: valorInicialDeY }];
-    while (valorInicialDeX < valorFinalDeX) {
+    while (valorInicialDeX < xFinal) {
         valorInicialDeY = valorInicialDeY + (h * this.resolverFuncion(valorInicialDeY, valorInicialDeX, funcion));
         valorInicialDeX = valorInicialDeX + h;
         valores.push({x: valorInicialDeX, y: valorInicialDeY});
@@ -132,22 +140,22 @@ export class AppComponent implements AfterViewInit {
     this.addNewValues("Euler", valores);
   }
 
-  private eulerMejorado(funcion: string, valorFinalDeX: any, valorInicialDeX: any, valorInicialDeY: any, h: any): void  {
+  private eulerMejorado(funcion: string, xFinal: any, valorInicialDeX: any, valorInicialDeY: any, h: any): void  {
     let valores = [{ x: valorInicialDeX, y: valorInicialDeY }];
     let predictor: any;
-    while (valorInicialDeX < valorFinalDeX) {
-        predictor = valorInicialDeY + h * this.resolverFuncion(valorInicialDeY, valorInicialDeX, funcion);
-        valorInicialDeY = valorInicialDeY + (0.5) * (this.resolverFuncion(valorInicialDeY, valorInicialDeX, funcion) + 
-          this.resolverFuncion(predictor, valorInicialDeX + h, funcion)) * h;
+    while (valorInicialDeX < xFinal) {
+        predictor = valorInicialDeY + (h * this.resolverFuncion(valorInicialDeY, valorInicialDeX, funcion));
+        valorInicialDeY = valorInicialDeY + (h / 2) * (this.resolverFuncion(valorInicialDeY, valorInicialDeX, funcion) + 
+          this.resolverFuncion(predictor, valorInicialDeX + h, funcion));
         valorInicialDeX = valorInicialDeX + h;
         valores.push({x: valorInicialDeX, y: valorInicialDeY});
     }
     this.addNewValues("Euler mejorado", valores);
   }
 
-  private rungeKutta(funcion: string, valorFinalDeX: any, valorInicialDeX: any, valorInicialDeY: any, h: any): void {
+  private rungeKutta(funcion: string, xFinal: any, valorInicialDeX: any, valorInicialDeY: any, h: any): void {
     let valores = [{ x: valorInicialDeX, y: valorInicialDeY }];
-    while (valorInicialDeX < valorFinalDeX) {
+    while (valorInicialDeX < xFinal) {
         let m1 = this.resolverFuncion(valorInicialDeY, valorInicialDeX, funcion);
         let m2 = this.resolverFuncion((valorInicialDeY + (m1 * h / 2)), (valorInicialDeX + (h / 2)), funcion);
         let m3 = this.resolverFuncion((valorInicialDeY + (m2 * h / 2)), (valorInicialDeX + (h / 2)), funcion);
@@ -166,33 +174,36 @@ export class AppComponent implements AfterViewInit {
   }
 
   public ngAfterViewInit(): void {
-    this.calcular(false);
-    this.yInicial.valueChanges.subscribe(val => {
-      this.calcular(true);
+    this.calcular(false, false);
+    this.yInicial.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
+      this.calcular(true, true);
     });
-    this.xInicial.valueChanges.subscribe(val => {
-      this.calcular(true);
+    this.xInicial.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
+      this.calcular(true, true);
     });
-    this.xFinal.valueChanges.subscribe(val => {
-      this.calcular(true);
+    this.xFinal.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
+      this.calcular(true, true);
     });
-    this.valorH.valueChanges.subscribe(val => {
-      this.calcular(true);
+    this.intervalos.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
+      this.calcular(true, false);
     });
   }
 
-  public calcular(update: boolean): void {
+  public calcular(update: boolean, updateH: boolean): void {
     if (this.formGroup.valid) {
       let funcion = this.formGroup.controls["funcion"].value;
       let yInicial = parseFloat(this.formGroup.controls["yInicial"].value);
       let xInicial = parseFloat(this.formGroup.controls["xInicial"].value);
       let xFinal = parseFloat(this.formGroup.controls["xFinal"].value);
-      let valorH = parseFloat(this.formGroup.controls["valorH"].value);
-      this.euler(funcion, xFinal, xInicial, yInicial, valorH);
-      this.eulerMejorado(funcion, xFinal, xInicial, yInicial, valorH);
-      this.rungeKutta(funcion, xFinal, xInicial, yInicial, valorH);
-      if (update) {
-        this.chart.updateOptions(this.chartOptions);
+      let intervalos = parseFloat(this.formGroup.controls["intervalos"].value);
+      if (!Number.isNaN(yInicial) && !Number.isNaN(xInicial) && !Number.isNaN(xFinal) && !Number.isNaN(intervalos) && intervalos > 0) {
+        let valorH = (xFinal - xInicial) / intervalos;
+        this.euler(funcion, xFinal, xInicial, yInicial, valorH);
+        this.eulerMejorado(funcion, xFinal, xInicial, yInicial, valorH);
+        this.rungeKutta(funcion, xFinal, xInicial, yInicial, valorH);
+        if (update) {
+          this.chart.updateOptions(this.chartOptions);
+        }
       }
     }
   }
@@ -201,5 +212,5 @@ export class AppComponent implements AfterViewInit {
   get yInicial() { return this.formGroup.get('yInicial'); }
   get xInicial() { return this.formGroup.get('xInicial'); }
   get xFinal() { return this.formGroup.get('xFinal'); }
-  get valorH() { return this.formGroup.get('valorH'); }
+  get intervalos() { return this.formGroup.get('intervalos'); }
 }

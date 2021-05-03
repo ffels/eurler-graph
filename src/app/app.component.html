@@ -6,7 +6,21 @@
       <div class="col-md-2">
         <div class="input-group">
           <div class="input-group-prepend">
-            <span class="input-group-text">Y´</span>
+            <div class="input-group-text">Y´
+              <span class="tooltiptext">
+                Ejemplos:
+                <ul>
+                  <li>x+y</li>
+                  <li>x-y</li>
+                  <li>x*y</li>
+                  <li>x/y</li>
+                  <li>x^y</li>
+                  <li>sin(x)</li>
+                  <li>cos(x)</li>
+                  <li>tan(x)</li>
+                </ul>
+              </span>
+            </div>
           </div>
           <input type="text" class="form-control" id="funcion" formControlName="funcion" placeholder="Funcion">
         </div>
@@ -36,15 +50,13 @@
         </div>
       </div>
       <div class="col-md-2">
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">h</span>
-          </div>
-          <input type="number" class="form-control" id="valorH" formControlName="valorH" placeholder="">
+        <div style="display: grid;">
+          <span>Intervalos: {{intervalos.value}} </span>
+          <input #sliderElement [id]="slider.id" type="range" [step]="slider.step" [min]="slider.minValue" [max]="slider.maxValue" formControlName="intervalos">
         </div>
       </div>
       <div class="col-md-2">
-        <button class="btn btn-success" (click)="calcular(true)">Graficar</button>
+        <button class="btn btn-success" (click)="calcular(true, false)">Graficar</button>
       </div>
     </div>
   </div>

@@ -1,3 +1,33 @@
 hr.rounded {
     border-top: 1px solid #bbb;
 }
+  .input-group-text .tooltiptext {
+    visibility: hidden;
+    position: absolute;
+    width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.3s;
+    top: 42px;
+  }
+  
+  .input-group-text .tooltiptext::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent;
+  }
+  
+  .input-group-text:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }
