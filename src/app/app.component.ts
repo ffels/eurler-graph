@@ -174,22 +174,22 @@ export class AppComponent implements AfterViewInit {
   }
 
   public ngAfterViewInit(): void {
-    this.calcular(false, false);
+    this.calcular(false);
     this.yInicial.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
-      this.calcular(true, true);
+      this.calcular(true);
     });
     this.xInicial.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
-      this.calcular(true, true);
+      this.calcular(true);
     });
     this.xFinal.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
-      this.calcular(true, true);
+      this.calcular(true);
     });
     this.intervalos.valueChanges.pipe(distinctUntilChanged()).subscribe(val => {
-      this.calcular(true, false);
+      this.calcular(true);
     });
   }
 
-  public calcular(update: boolean, updateH: boolean): void {
+  public calcular(update: boolean): void {
     if (this.formGroup.valid) {
       let funcion = this.formGroup.controls["funcion"].value;
       let yInicial = parseFloat(this.formGroup.controls["yInicial"].value);
